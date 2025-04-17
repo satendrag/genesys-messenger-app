@@ -1,157 +1,38 @@
-const puppeteer = require("puppeteer");
-//const { scrollPageToBottom } = require('puppeteer-autoscroll-down')
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <link href="//cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded shadow-md w-96">
+      <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+      <form id="loginForm">
+        <div class="mb-4">
+          <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+          <input type="text" id="username" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 p-2" />
+        </div>
+        <div class="mb-4">
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 p-2" />
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-200">Login</button>
+      </form>
+    </div>
 
-//const ccpbase = "https://cyara-staging-1.awsapps.com/connect";
-const ccpbase = "https://cyara-staging-1.my.connect.aws";
-const ccpurl = `${ccpbase}/agent-app-v2`;
-const webtimeout = 50000;
-const agentusername = 'cyara0001';
-const agentpassword = 'C1@r@2020';  
+    <script>
+      document.getElementById('loginForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
 
-(async () => {
-  //const { scrollPageToBottom } = await import('puppeteer-autoscroll-down');
-
-    console.log('starting');
-    const browser = await puppeteer.launch({
-        headless: false
-    });
-
-    let context = await browser.createBrowserContext();
-
-    // allow site permissions
-    context.overridePermissions(ccpurl, ['geolocation', 'notifications']);
-
-    const page = await context.newPage();
-
-    // page.goto("http://localhost:3000"); //ref https://medium.com/@carlosabpreciado/scraping-the-shadow-dom-with-puppeteer-9f8f41d998e8
-
-    await page.goto(`${ccpbase}`, { waitUntil: ['load', 'domcontentloaded', 'networkidle0'], timeout: webtimeout });
-    await page.waitForSelector('#wdc_username', { visible: true, timeout: webtimeout });
-
-    await page.type('#wdc_username', agentusername);
-    await page.type('#wdc_password', agentpassword);
-
-    await Promise.all([
-        page.waitForNavigation({ waitUntil: ['load', 'domcontentloaded', 'networkidle0'] }),
-        page.click('#wdc_login_button'),
-        page.waitForSelector('.lily-quick-start-guide-page-header', { visible: true, timeout: webtimeout })
-    ]);
-
-    console.log('logged in');
-
-    /*
-     //const pierceSelector = "pierce/#my-cool-text";
-     const pierceSelector = "pierce/#logout";
-    try {
-        const labelTexts = await pierceLabelElements(page, pierceSelector);
-        console.log(labelTexts);
-        // you will get ->
-        // [
-        //  'This is some text inside the shadow DOM.',
-        //  'This is some text inside the shadow DOM.',
-        //  'This is some text inside the shadow DOM.'
-        // ] 
-        // you can see 3 elements because the pierce operator is getting
-        // the element from all the available sub-trees
-    } catch (error) {
-        console.error("Error fetching text with pierce:", error);
-    }
-    */
-
-    /*
-    const elementHandle = await page.locator('& >>> #logout').waitHandle();
-
-    if (elementHandle) {
-        console.log('Found element', elementHandle);
-
-        // Extract the element's ID and title using evaluate
-        var elementId = await page.evaluate(el => el.id, elementHandle);
-        var elementTitle = await page.evaluate(el => el.title, elementHandle);
-
-        console.log('Element ID:', elementId);
-        console.log('Element Title:', elementTitle);
-    } else {
-        console.log('Element not found');
-    }
-    */
-
-    try{
-      await page.locator('& >>> #logout').setTimeout(1000).wait();
-      console.log('found element')
-    }catch(error){
-      console.error("Error fetching text with deep combinators:", error);
-    }
-
-    console.log(`loading ccpurl: ${ccpurl}`);
-
-    await page.goto(`${ccpurl}`, { waitUntil: ['load', 'domcontentloaded', 'networkidle0'], timeout: webtimeout });
-
-    await page.waitForFunction('document.readyState === "complete"', {timeout: webtimeout});  // Wait for complete state
-
-    /*
-    console.log('waiting for 2 sec')
-
-    await sleep(10000);
-    console.log('waited 2 sec')
-    
-    // Scroll to the very top of the page
-    await page.evaluate(_ => {
-      window.scrollTo(0, 0);
-    });
-
-    // Scroll to the bottom of the page with puppeteer-autoscroll-down
-    await scrollPageToBottom(page);
-
-    console.log('scrolled to bottom');
-    */
-
-    console.log(`ccpurl loaded. checking iframe`);
-
-    // Wait for the iframe to load
-    await page.waitForSelector('iframe[src*="cyara-staging-1.my.connect.aws"]');
-
-    console.log(`iframe available. getting iframe element`);
-
-    // Get the iframe element
-    const elementHandle = await page.$('iframe[src*="cyara-staging-1.my.connect.aws"]');
-
-    console.log(`iframe available. getting iframe content frame`);
-
-    // Get the frame object from the iframe
-    const frame = await elementHandle.contentFrame();
-
-    console.log(`frame available. getting agent status selector`);
-
-    try{
-      // Wait for the element inside the iframe to be available
-      await frame.waitForSelector('#agent-status-dropdown');
-      console.log('found element2')
-    }catch(error){
-      console.error("Error fetching agent-ccp-v2 element:", error);
-    }
-
-  //  await browser.close();
-})();
-
-async function sleep(milliseconds){
-  return new Promise(resolve => setTimeout(resolve, milliseconds))
-}
-
-async function pierceLabelElements(page, selector) {
-  try {
-    var element = await page.waitForSelector(selector, { timeout: 3000 });
-    console.log('got shadow elem: ', element);
-    var elementId = await page.evaluate(el => el.id, element);
-    var elementTitle = await page.evaluate(el => el.title, element);
-
-    console.log('got element: ', {elementId, elementTitle});
-
-    element.click
-    const labelTexts = await page.$$eval(selector, (elements) =>
-      elements.map((el) => el.textContent)
-    );
-    return labelTexts;
-  } catch (error) {
-    throw new Error(`Failed to pierce label elements: ${error.message}`);
-  }
-}
+        if (username === 'admin' && password === 'password') {
+          window.location.href = 'genesys-chat.html';
+        } else {
+          alert('Invalid username or password');
+        }
+      });
+    </script>
+  </body>
